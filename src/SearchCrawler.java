@@ -490,11 +490,11 @@ public class SearchCrawler extends JFrame
 			crawledList.add(url);
 			
 			///////////////////////////////////////
-			// Download the page at the given URL./
+			// Connect to the given URL./
 			///////////////////////////////////////
                         Document htmlDocumentq=connectToServer(verifiedUrl);			
                         ///////////////////////////////////////
-			// Download the page at the given URL./
+			// Connect to the given URL./
 			///////////////////////////////////////
 			
 			
@@ -519,23 +519,6 @@ public class SearchCrawler extends JFrame
 		}
 	}
 
-	// Download page at given URL.
-	private String downloadPage(URL pageUrl) {
-		try {
-			// Open connection to URL for reading.
-			BufferedReader reader = new BufferedReader(new InputStreamReader(pageUrl.openStream()));
-			// Read page into buffer.
-			String line;
-			StringBuffer pageBuffer = new StringBuffer();
-			while ((line = reader.readLine()) != null) {
-				pageBuffer.append(line);
-			}
-			return pageBuffer.toString();
-		} 
-		catch (Exception e) {
-		}
-		return null;
-	}
 	
 	
 	// Verify URL format.
