@@ -496,6 +496,7 @@ public class SearchCrawler extends JFrame
                         ///////////////////////////////////////
 			// Connect to the given URL./
 			///////////////////////////////////////
+			String metaData=retrieveMetadata(htmlDocumentq);
 			
 			
 			/* 
@@ -671,6 +672,15 @@ public class SearchCrawler extends JFrame
 		return (url);
 	}
 
+	
+	private String retrieveMetadata(Document doc)
+        {
+            int count=0;
+            String keywords = doc.select("meta[name=keywords]").first() .attr("content");
+            System.out.println(keywords);
+            return keywords;
+            
+        }
 
 	/* Determine whether or not search string is
 	matched in the given page contents. */
