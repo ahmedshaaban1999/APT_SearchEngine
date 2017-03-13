@@ -434,15 +434,39 @@ public class SearchCrawler extends JFrame
 
 	// Perform the actual crawling, searching for the search string.
 	
+        public static boolean pingUrl() {
+        try {
+         final URL url = new URL("https://" + "google.com");
+         final HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
+         urlConn.connect();
+         if (urlConn.getResponseCode() == HttpURLConnection.HTTP_OK) {
+          return true;
+         }
+        } catch (final MalformedURLException e1) {
+         
+        } catch (final IOException e) {
+         
+        }
+        return false;
+}
         
         private Document connectToServer(URL pageUrl) throws IOException
         {
+            try{
             Connection connection = Jsoup.connect(pageUrl.toString()).userAgent(USER_AGENT);
             Document htmlDocument = connection.get();
             pageBody = htmlDocument.body().text();
             //System.out.println(pageBody);
             return htmlDocument;
-        }
+            }
+            catch(Exception e)
+            {
+                if(pingUrl())
+                    return null;
+                else
+                    return connectToServer(pageUrl);
+            }
+            }
         
 	//public void crawl(String startUrl, int maxUrls, boolean limitHost)
 	public void crawl(String startUrl, int maxUrls, boolean limitHost,String searchString, boolean caseSensitive) throws IOException
@@ -467,14 +491,18 @@ public class SearchCrawler extends JFrame
 					break;
 				}
 			}
+                        String url = toCrawlList.iterator().toString();
+                        URL verifiedUrl = verifyUrl(url);
+                        Document htmlDocumentq=null;
 			// Get URL at bottom of the list.
-			String url = (String) toCrawlList.iterator().next();
+                        do{
+                        url = (String) toCrawlList.iterator().next();
 			// Remove URL from the To Crawl list.
 			toCrawlList.remove(url);
 			
 			
 			// Convert string url to URL object.
-			URL verifiedUrl = verifyUrl(url);
+			verifiedUrl = verifyUrl(url);
 			
 			
 			// Skip URL if robots are not allowed to access it.
@@ -492,11 +520,15 @@ public class SearchCrawler extends JFrame
 			///////////////////////////////////////
 			// Connect to the given URL./
 			///////////////////////////////////////
-                        Document htmlDocumentq=connectToServer(verifiedUrl);			
+                        htmlDocumentq=connectToServer(verifiedUrl);
+                        }
+                        while(htmlDocumentq==null);
+                        
+                        
                         ///////////////////////////////////////
 			// Connect to the given URL./
 			///////////////////////////////////////
-			String metaData=retrieveMetadata(htmlDocumentq);
+			//String metaData=retrieveMetadata(htmlDocumentq);
 			
 			
 			/* 
@@ -678,6 +710,10 @@ public class SearchCrawler extends JFrame
             int count=0;
             String keywords = doc.select("meta[name=keywords]").first() .attr("content");
             System.out.println(keywords);
+            if(keywords.length()>1)
+            return keywords;
+            else
+                keywords="";
             return keywords;
             
         }
