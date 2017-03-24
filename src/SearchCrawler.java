@@ -439,32 +439,38 @@ public class SearchCrawler extends JFrame {
 
 	// Perform the actual crawling, searching for the search string.
 
-	public static boolean pingUrl() {
-		try {
-			final URL url = new URL("https://" + "google.com");
-			final HttpURLConnection urlConn = (HttpURLConnection) url.openConnection();
-			urlConn.connect();
-			if (urlConn.getResponseCode() == HttpURLConnection.HTTP_OK) {
-				return true;
-			}
-		} catch (final MalformedURLException e1) {
-
-		} catch (final IOException e) {
-
-		}
-		return false;
+	private static boolean pingUrl()
+        {
+            try 
+            {
+            final URL url = new URL("https://" + "google.com");
+            Connection googleConnection = Jsoup.connect(url.toString()).userAgent(USER_AGENT);            
+            
+            }
+             catch (final IOException e)
+            {
+                return false;    
+            }
+            return true;
 	}
 
-	private Document connectToServer(URL pageUrl) throws IOException {
-		while (pingUrl()) {
-			Connection connection = Jsoup.connect(pageUrl.toString()).userAgent(USER_AGENT);
-			connection.ignoreHttpErrors(true);
-			Document htmlDocument = connection.get();
-			pageBody = htmlDocument.body().text();
-			// System.out.println(pageBody);
-			return htmlDocument;
-		}
-		return null;
+	private Document connectToServer(URL pageUrl) throws IOException 
+        {
+            try {
+                Connection connection = Jsoup.connect(pageUrl.toString()).userAgent(USER_AGENT);	
+                Document htmlDocument = connection.get();
+                pageBody = htmlDocument.body().text();
+                return htmlDocument;
+                }
+            catch(IOException e)
+            {
+                if(pingUrl())
+                {
+                    return null;
+                }
+                return connectToServer(pageUrl);
+            }
+            
 	}
 
 	// public void crawl(String startUrl, int maxUrls, boolean limitHost)
@@ -491,39 +497,31 @@ public class SearchCrawler extends JFrame {
 					break;
 				}
 			}
-			String url = toCrawlList.iterator().toString();
-			URL verifiedUrl = verifyUrl(url);
-			Document htmlDocumentq = null;
+                        String url = (String)toCrawlList.iterator().next();
 			// Get URL at bottom of the list.
-			do {
-				if (toCrawlList.iterator().hasNext()) {
-					url = (String) toCrawlList.iterator().next();
-				} else {
-					break;
-				}
-				// Remove URL from the To Crawl list.
-				toCrawlList.remove(url);
+                        // Remove URL from the To Crawl list.
+                        toCrawlList.remove(url);
+                        // Convert string url to URL object.
+                        URL verifiedUrl = verifyUrl(url);
+                        // Skip URL if robots are not allowed to access it.
+                        if (!isRobotAllowed(verifiedUrl)) {
+                                continue;
+                        }
 
-				// Convert string url to URL object.
-				verifiedUrl = verifyUrl(url);
+                        // Update crawling stats.
+                        updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
 
-				// Skip URL if robots are not allowed to access it.
-				if (!isRobotAllowed(verifiedUrl)) {
-					continue;
-				}
+                        // Add page to the crawled list.
+                        crawledList.add(url);
 
-				// Update crawling stats.
-				updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
-
-				// Add page to the crawled list.
-				crawledList.add(url);
-
-				///////////////////////////////////////
-				// Connect to the given URL./
-				///////////////////////////////////////
-				htmlDocumentq = connectToServer(verifiedUrl);
-			} while (htmlDocumentq == null);
-
+                        ///////////////////////////////////////
+                        // Connect to the given URL./
+                        ///////////////////////////////////////
+                        
+                        while(connectToServer(verifiedUrl)==null)
+                        {
+                        }
+                        Document htmlDocumentq = connectToServer(verifiedUrl);
 			///////////////////////////////////////
 			// Connect to the given URL./
 			///////////////////////////////////////
