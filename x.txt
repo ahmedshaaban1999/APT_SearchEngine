@@ -1,0 +1,4 @@
+http://www.thetimes.co.uk/
+https://en.wikipedia.org/wiki/Main_Page
+https://www.microsoft.com/en-eg/
+http://codeforces.com/

@@ -13,7 +13,8 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
-
+import java.util.List;
+import java.util.concurrent.TimeUnit ;
 // The Search Web Crawler
 public class SearchCrawler extends JFrame {
 	private Map<String, String[]> CrawlerStruct = new HashMap<String, String[]>();
@@ -56,9 +57,9 @@ public class SearchCrawler extends JFrame {
 	// Constructor for Search Web Crawler.
 	public SearchCrawler() {
 		// Set application title.
-		setTitle("Search Crawler");
+		setTitle("APT Project");
 		// Set window size.
-		setSize(600, 600);
+		setSize(600, 400);
 		// Handle window closing events.
 		addWindowListener(new WindowAdapter() {
 			public void windowClosing(WindowEvent e) {
@@ -83,7 +84,7 @@ public class SearchCrawler extends JFrame {
 		GridBagConstraints constraints;
 		GridBagLayout layout = new GridBagLayout();
 		searchPanel.setLayout(layout);
-		JLabel startLabel = new JLabel("Start URL:");
+		JLabel startLabel = new JLabel("URLs file list:");
 		constraints = new GridBagConstraints();
 
 		constraints.anchor = GridBagConstraints.EAST;
@@ -120,7 +121,7 @@ public class SearchCrawler extends JFrame {
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
 		layout.setConstraints(blankLabel, constraints);
 		searchPanel.add(blankLabel);
-		JLabel logLabel = new JLabel("Matches Log File:");
+		JLabel logLabel = new JLabel("Debug File:");
 		constraints = new GridBagConstraints();
 		constraints.anchor = GridBagConstraints.EAST;
 		constraints.insets = new Insets(5, 5, 0, 0);
@@ -134,27 +135,27 @@ public class SearchCrawler extends JFrame {
 		constraints.insets = new Insets(5, 5, 0, 5);
 		layout.setConstraints(logTextField, constraints);
 		searchPanel.add(logTextField);
-		JLabel searchLabel = new JLabel("Search String:");
+		//JLabel searchLabel = new JLabel("Search String:");
 		constraints = new GridBagConstraints();
 		constraints.anchor = GridBagConstraints.EAST;
 		constraints.insets = new Insets(5, 5, 0, 0);
-		layout.setConstraints(searchLabel, constraints);
-		searchPanel.add(searchLabel);
+		//layout.setConstraints(searchLabel, constraints);
+		//searchPanel.add(searchLabel);
 		searchTextField = new JTextField();
 		constraints = new GridBagConstraints();
 		constraints.fill = GridBagConstraints.HORIZONTAL;
 		constraints.insets = new Insets(5, 5, 0, 0);
 		constraints.gridwidth = 2;
 		constraints.weightx = 1.0d;
-		layout.setConstraints(searchTextField, constraints);
-		searchPanel.add(searchTextField);
-		caseCheckBox = new JCheckBox("Case Sensitive");
+		//layout.setConstraints(searchTextField, constraints);
+		//searchPanel.add(searchTextField);
+		//caseCheckBox = new JCheckBox("Case Sensitive");
 		constraints = new GridBagConstraints();
 		constraints.insets = new Insets(5, 5, 0, 5);
 		constraints.gridwidth = GridBagConstraints.REMAINDER;
-		layout.setConstraints(caseCheckBox, constraints);
-		searchPanel.add(caseCheckBox);
-		searchButton = new JButton("Search");
+		//layout.setConstraints(caseCheckBox, constraints);
+		//searchPanel.add(caseCheckBox);
+		searchButton = new JButton("Crawl");
 		searchButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				actionSearch();
@@ -231,12 +232,12 @@ public class SearchCrawler extends JFrame {
 		constraints.insets = new Insets(5, 5, 0, 5);
 		layout.setConstraints(progressBar, constraints);
 		searchPanel.add(progressBar);
-		JLabel matchesLabel1 = new JLabel("Search Matches:");
+		//JLabel matchesLabel1 = new JLabel("Search Matches:");
 		constraints = new GridBagConstraints();
 		constraints.anchor = GridBagConstraints.EAST;
 		constraints.insets = new Insets(5, 5, 10, 0);
-		layout.setConstraints(matchesLabel1, constraints);
-		searchPanel.add(matchesLabel1);
+		//layout.setConstraints(matchesLabel1, constraints);
+		//searchPanel.add(matchesLabel1);
 		matchesLabel2 = new JLabel();
 		matchesLabel2.setFont(matchesLabel2.getFont().deriveFont(Font.PLAIN));
 		constraints = new GridBagConstraints();
@@ -245,21 +246,9 @@ public class SearchCrawler extends JFrame {
 		constraints.insets = new Insets(5, 5, 10, 5);
 		layout.setConstraints(matchesLabel2, constraints);
 		searchPanel.add(matchesLabel2);
-		// Set up matches table.
-		table = new JTable(new DefaultTableModel(new Object[][] {}, new String[] { "URL" }) {
-			public boolean isCellEditable(int row, int column) {
-				return false;
-			}
-		});
-		// Set up Matches panel.
-		JPanel matchesPanel = new JPanel();
-		matchesPanel.setBorder(BorderFactory.createTitledBorder("Matches"));
-		matchesPanel.setLayout(new BorderLayout());
-		matchesPanel.add(new JScrollPane(table), BorderLayout.CENTER);
 		// Add panels to display.
 		getContentPane().setLayout(new BorderLayout());
 		getContentPane().add(searchPanel, BorderLayout.NORTH);
-		getContentPane().add(matchesPanel, BorderLayout.CENTER);
 	}
 
 	// Exit this program.
@@ -267,86 +256,85 @@ public class SearchCrawler extends JFrame {
 		System.exit(0);
 	}
 
-	// Handle Search/Stop button being clicked.
-	private void actionSearch() {
-		// If stop button clicked, turn crawling flag off.
-		if (crawling) {
-			crawling = false;
-			return;
-		}
-		ArrayList errorList = new ArrayList();
-		// Validate that start URL has been entered.
-		String startUrl = startTextField.getText().trim();
-		if (startUrl.length() < 1) {
-			errorList.add("Missing Start URL.");
-		}
-		// Verify start URL.
-		else if (verifyUrl(startUrl) == null) {
-			errorList.add("Invalid Start URL.");
-		}
-		// Validate that Max URLs is either empty or is a number.
-		int maxUrls = 0;
-		String max = ((String) maxComboBox.getSelectedItem()).trim();
-		if (max.length() > 0) {
-			try {
-				maxUrls = Integer.parseInt(max);
-			} catch (NumberFormatException e) {
-			}
-			if (maxUrls < 1) {
-				errorList.add("Invalid Max URLs value.");
-			}
-		}
-		// Validate that matches log file has been entered.
-		String logFile = logTextField.getText().trim();
-		if (logFile.length() < 1) {
-			errorList.add("Missing Matches Log File.");
-		}
-		// Validate that search string has been entered.
-		String searchString = searchTextField.getText().trim();
-		if (searchString.length() < 1) {
-			errorList.add("Missing Search String.");
-		}
-		// Show errors, if any, and return.
-		if (errorList.size() > 0) {
-			StringBuffer message = new StringBuffer();
-			// Concatenate errors into single message.
-			for (int i = 0; i < errorList.size(); i++) {
-				message.append(errorList.get(i));
-				if (i + 1 < errorList.size()) {
-					message.append("\n");
-				}
-			}
-			showError(message.toString());
-			return;
-		}
-		// Remove "www" from start URL if present.
-		startUrl = removeWwwFromUrl(startUrl);
-		// Start the Search Crawler.
-		search(logFile, startUrl, maxUrls, searchString);
+	// Handle Crawl/Stop button being clicked.
+        private void actionSearch() {
+            try {
+                // If stop button clicked, turn crawling flag off.
+                if (crawling) {
+                    crawling = false;
+                    return;
+                }
+                ArrayList errorList = new ArrayList();
+                
+                // Validate that start URL has been entered.
+                String startUrl = startTextField.getText().trim();
+                
+                // Read the file of Urls
+                Scanner sc = new Scanner(new File(startUrl));
+                List<String> lines = new ArrayList<String>();
+                while (sc.hasNextLine()) {
+                    lines.add(removeWwwFromUrl(sc.nextLine()));
+                }
+                
+                String[] arrSeed = lines.toArray(new String[0]);
+                
+                if (startUrl.length() < 1) {
+                    errorList.add("Missing Start URL.");
+                }
+                // Verify start URL.
+                
+                // Validate that Max URLs is either empty or is a number.
+                int maxUrls = 0;
+                String max = ((String) maxComboBox.getSelectedItem()).trim();
+                if (max.length() > 0) {
+                    try {
+                        maxUrls = Integer.parseInt(max);
+                    }
+                    catch (NumberFormatException e) {
+                    }
+                    if (maxUrls < 1) {
+                        errorList.add("Invalid Max URLs value.");
+                    }
+                }
+                // Validate that matches log file has been entered.
+                String logFile = logTextField.getText().trim();
+                if (logFile.length() < 1) {
+                    errorList.add("Missing Matches Log File.");
+                }
+                // Show errors, if any, and return.
+                if (errorList.size() > 0) {
+                    StringBuffer message = new StringBuffer();
+                    // Concatenate errors into single message.
+                    for (int i = 0; i < errorList.size(); i++) {
+                        message.append(errorList.get(i));
+                        if (i + 1 < errorList.size()) {
+                            message.append("\n");
+                        }
+                    }
+                    showError(message.toString());
+                    return;
+                }
+                
+                for (String stringSeed: arrSeed) {
+                    System.out.println(stringSeed+"NEW THREAD IS CREATED");
+                    // Start the Search Crawler.
+                    search(logFile,stringSeed,maxUrls);
+                }
+            } catch (FileNotFoundException ex) {
+                Logger.getLogger(SearchCrawler.class.getName()).log(Level.SEVERE, null, ex);
+            }
+		
 	}
-
-	private void search(final String logFile, final String startUrl, final int maxUrls, final String searchString) {
+	private void search(final String logFile, final String startUrl, final int maxUrls) {
 		// Start the search in a new thread.
+                
 		Thread thread = new Thread(new Runnable() {
 			public void run() {
+                
 				// Show hour glass cursor while crawling is under way.
 				setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-				// Disable search controls.
-				startTextField.setEnabled(false);
-				maxComboBox.setEnabled(false);
-				limitCheckBox.setEnabled(false);
-				logTextField.setEnabled(false);
-				searchTextField.setEnabled(false);
-				caseCheckBox.setEnabled(false);
-				// Switch Search button to "Stop."
-				searchButton.setText("Stop");
-				// Reset stats.
-				table.setModel(new DefaultTableModel(new Object[][] {}, new String[] { "URL" }) {
-					public boolean isCellEditable(int row, int column) {
-						return false;
-					}
-				});
-
+                                searchButton.setText("Stop");
+                                //update GUI
 				updateStats(startUrl, 0, 0, maxUrls);
 				// Open matches log file.
 				try {
@@ -359,12 +347,10 @@ public class SearchCrawler extends JFrame {
 				crawling = true;
 				try {
 					// Perform the actual crawling.
-					crawl(startUrl, maxUrls, limitCheckBox.isSelected(), searchString, caseCheckBox.isSelected());
+					crawl(startUrl, maxUrls, limitCheckBox.isSelected());
 				} catch (IOException ex) {
 					Logger.getLogger(SearchCrawler.class.getName()).log(Level.SEVERE, null, ex);
 				}
-				// Turn crawling flag off.
-				crawling = false;
 				// Close matches log file.
 				try {
 					logFileWriter.close();
@@ -378,22 +364,16 @@ public class SearchCrawler extends JFrame {
 				maxComboBox.setEnabled(true);
 				limitCheckBox.setEnabled(true);
 				logTextField.setEnabled(true);
-				searchTextField.setEnabled(true);
-				caseCheckBox.setEnabled(true);
+				//searchTextField.setEnabled(true);
+				//caseCheckBox.setEnabled(true);
 				// Switch search button back to "Search."
-				searchButton.setText("Search");
+				searchButton.setText("Crawl");
 				// Return to default cursor.
 				setCursor(Cursor.getDefaultCursor());
 				// Show message if search string not found.
 
-				if (table.getRowCount() == 0) {
-					JOptionPane.showMessageDialog(SearchCrawler.this,
-							"Your Search String was not found. Please try another.", "Search String Not Found",
-							JOptionPane.WARNING_MESSAGE);
-				}
-
 			}
-
+                        
 		});
 
 		thread.start();
@@ -416,29 +396,17 @@ public class SearchCrawler extends JFrame {
 			progressBar.setMaximum(maxUrls);
 		}
 		progressBar.setValue(crawled);
-		matchesLabel2.setText("" + table.getRowCount());
-	}
-
-	// Add match to matches table and log file.
-	private void addMatch(String url) {
-		// Add URL to matches table.
-		DefaultTableModel model = (DefaultTableModel) table.getModel();
-		model.addRow(new Object[] { url });
-		// Add URL to matches log file.
-		try {
-			logFileWriter.println(url);
-		} catch (Exception e) {
-			showError("Unable to log match.");
-		}
+		//matchesLabel2.setText("" + table.getRowCount());
 	}
 
 	private void populateIndex(String Url) {
+                System.out.println("Current THrea at "+Url);
 		fac.Tokenize(pageBody);
 		fac.Index(Url);
 	}
 
-	// Perform the actual crawling, searching for the search string.
-
+	
+        //check connection time out
 	private static boolean pingUrl()
         {
             try 
@@ -453,7 +421,9 @@ public class SearchCrawler extends JFrame {
             }
             return true;
 	}
+        
 
+        //connecting to the URL
 	private Document connectToServer(URL pageUrl) throws IOException 
         {
             try {
@@ -473,244 +443,243 @@ public class SearchCrawler extends JFrame {
             
 	}
 
-	// public void crawl(String startUrl, int maxUrls, boolean limitHost)
-	public void crawl(String startUrl, int maxUrls, boolean limitHost, String searchString, boolean caseSensitive)
-			throws IOException {
-		System.out.println("I am here in Crawl");
-		// Set up crawl lists.
-		HashSet crawledList = new HashSet();
-		LinkedHashSet toCrawlList = new LinkedHashSet();
+        
+	// Perform the actual crawling.
+	public void crawl(String startUrl, int maxUrls, boolean limitHost)
+            throws IOException 
+        {
+            System.out.println("I am here in Crawl");
+            System.out.println(startUrl);
+            // Set up crawl lists.
+            HashSet crawledList = new HashSet();
+            LinkedHashSet toCrawlList = new LinkedHashSet();
 
-		// Add start URL to the tocrawllist.
-		toCrawlList.add(startUrl);
+            // Add start URL to the tocrawllist.
+            toCrawlList.add(startUrl);
 
-		/*
-		 * Perform actual crawling by looping through the To Crawl list.
-		 */
-		while (crawling && toCrawlList.size() > 0) {
-			/*
-			 * Check to see if the max URL count has been reached, if it was
-			 * specified.
-			 */
-			if (maxUrls != -1) {
-				if (crawledList.size() == maxUrls) {
-					break;
-				}
-			}
-                        String url = (String)toCrawlList.iterator().next();
-			// Get URL at bottom of the list.
-                        // Remove URL from the To Crawl list.
-                        toCrawlList.remove(url);
-                        // Convert string url to URL object.
-                        URL verifiedUrl = verifyUrl(url);
-                        // Skip URL if robots are not allowed to access it.
-                        if (!isRobotAllowed(verifiedUrl)) {
-                                continue;
+            /*
+             * Perform actual crawling by looping through the To Crawl list.
+             */
+            while (crawling && toCrawlList.size() > 0)
+            {
+                /*
+                 * Check to see if the max URL count has been reached, if it was
+                 * specified.
+                 */
+                if (maxUrls != -1) {
+                        if (crawledList.size() == maxUrls) {
+                                break;
                         }
+                }
+                String url = (String)toCrawlList.iterator().next();
+                // Get URL at bottom of the list.
+                // Remove URL from the To Crawl list.
+                toCrawlList.remove(url);
+                // Convert string url to URL object.
+                URL verifiedUrl = verifyUrl(url);
+                // Skip URL if robots are not allowed to access it.
+                if (!isRobotAllowed(verifiedUrl)) {
+                  continue;
+                }
 
-                        // Update crawling stats.
-                        updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
+                // Update crawling stats.
+                updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
 
-                        // Add page to the crawled list.
-                        crawledList.add(url);
+                // Add page to the crawled list.
+                crawledList.add(url);
 
-                        ///////////////////////////////////////
-                        // Connect to the given URL./
-                        ///////////////////////////////////////
-                        
-                        while(connectToServer(verifiedUrl)==null)
-                        {
-                        }
-                        Document htmlDocumentq = connectToServer(verifiedUrl);
-			///////////////////////////////////////
-			// Connect to the given URL./
-			///////////////////////////////////////
-			// String metaData=retrieveMetadata(htmlDocumentq);
+                ///////////////////////////////////////
+                // Connect to the given URL and busy///
+                /// waiting if connection timed out.///
+                ///////////////////////////////////////
+                while(connectToServer(verifiedUrl)==null)
+                {
+                }
+                Document htmlDocumentq = connectToServer(verifiedUrl);
 
-			/*
-			 * retrieve all its links see if it contains the search string.
-			 */
-			if (pageBody != null && pageBody.length() > 0) {
-				// Retrieve list of valid links from page.
-				ArrayList links = retrieveLinks(verifiedUrl, htmlDocumentq, crawledList, limitHost);
-				toCrawlList.addAll(links);
+                // Extract metadata from the the document //
+                // String metaData=retrieveMetadata(htmlDocumentq);
 
-				populateIndex(url);
-				showStruct();
+                /*
+                 * retrieve all its links
+                 */
+                if (pageBody != null && pageBody.length() > 0) {
+                        // Retrieve list of valid links from page.
+                        ArrayList links = retrieveLinks(verifiedUrl, htmlDocumentq, crawledList, limitHost);
+                        // Add this links to the toCrawlList //
+                        toCrawlList.addAll(links);
 
-			}
-			// Update crawling stats.
-			updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
-		}
+                        populateIndex(url);
+
+
+                }
+                // Update crawling stats.
+                updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
+            }
 	}
 
+        
 	// Verify URL format.
 	private URL verifyUrl(String url) {
-		// Only allow HTTP URLs or HTTPS
-		if (!(url.toLowerCase().startsWith("http://") || url.toLowerCase().startsWith("https://")))
-			return null;
-		// Verify format of URL.
-		URL verifiedUrl = null;
-		try {
-			verifiedUrl = new URL(url);
-		} catch (Exception e) {
-			return null;
-		}
-		return verifiedUrl;
+            // Only allow HTTP URLs or HTTPS
+            if (!(url.toLowerCase().startsWith("http://") || url.toLowerCase().startsWith("https://")))
+                    return null;
+            // Verify format of URL.
+            URL verifiedUrl = null;
+            try {
+                    verifiedUrl = new URL(url);
+            } catch (Exception e) {
+                    return null;
+            }
+            return verifiedUrl;
 	}
 
+        
 	// Check if robot is allowed to access the given URL.
 	private boolean isRobotAllowed(URL urlToCheck) {
-		String host = urlToCheck.getHost().toLowerCase();
-		// Retrieve host's disallow list from cache.
-		ArrayList disallowList = (ArrayList) disallowListCache.get(host);
-		// If list is not in the cache, download and cache it.
-		if (disallowList == null) {
-			disallowList = new ArrayList();
-			try {
-				URL robotsFileUrl = new URL("http://" + host + "/robots.txt");
-				// Open connection to robot file URL for reading.
-				BufferedReader reader = new BufferedReader(new InputStreamReader(robotsFileUrl.openStream()));
-				// Read robot file, creating list of disallowed paths.
-				String line;
-				while ((line = reader.readLine()) != null) {
-					if (line.indexOf("Disallow:") == 0) {
-						String disallowPath = line.substring("Disallow:".length());
-						// Check disallow path for comments and remove if
-						// present.
-						int commentIndex = disallowPath.indexOf("#");
-						if (commentIndex != -1) {
-							disallowPath = disallowPath.substring(0, commentIndex);
-						}
-						// Remove leading or trailing spaces from disallow path.
-						disallowPath = disallowPath.trim();
-						// Add disallow path to list.
-						disallowList.add(disallowPath);
-					}
-				}
-				// Add new disallow list to cache.
-				disallowListCache.put(host, disallowList);
-			} catch (Exception e) {
-				/*
-				 * Assume robot is allowed since an exception is thrown if the
-				 * robot file doesn't exist.
-				 */
-				return true;
-			}
-		}
-		/*
-		 * Loop through disallow list to see if crawling is allowed for the
-		 * given URL.
-		 */
-		String file = urlToCheck.getFile();
-		for (int i = 0; i < disallowList.size(); i++) {
-			String disallow = (String) disallowList.get(i);
-			if (file.startsWith(disallow)) {
-				return false;
-			}
-		}
-		return true;
+            String host = urlToCheck.getHost().toLowerCase();
+            // Retrieve host's disallow list from cache.
+            ArrayList disallowList = (ArrayList) disallowListCache.get(host);
+            // If list is not in the cache, download and cache it.
+            if (disallowList == null) 
+            {
+                disallowList = new ArrayList();
+                try {
+                        URL robotsFileUrl = new URL("http://" + host + "/robots.txt");
+                        // Open connection to robot file URL for reading.
+                        BufferedReader reader = new BufferedReader(new InputStreamReader(robotsFileUrl.openStream()));
+                        // Read robot file, creating list of disallowed paths.
+                        String line;
+                        while ((line = reader.readLine()) != null) {
+                            if (line.indexOf("Disallow:") == 0) {
+                                String disallowPath = line.substring("Disallow:".length());
+                                // Check disallow path for comments and remove if
+                                // present.
+                                int commentIndex = disallowPath.indexOf("#");
+                                if (commentIndex != -1) {
+                                        disallowPath = disallowPath.substring(0, commentIndex);
+                                }
+                                // Remove leading or trailing spaces from disallow path.
+                                disallowPath = disallowPath.trim();
+                                // Add disallow path to list.
+                                disallowList.add(disallowPath);
+                            }
+                        }
+                        // Add new disallow list to cache.
+                        disallowListCache.put(host, disallowList);
+                } catch (Exception e) {
+                    /*
+                     * Assume robot is allowed since an exception is thrown if the
+                     * robot file doesn't exist.
+                     */
+                    return true;
+                }
+            }
+            /*
+             * Loop through disallow list to see if crawling is allowed for the
+             * given URL.
+             */
+            String file = urlToCheck.getFile();
+            for (int i = 0; i < disallowList.size(); i++) {
+                String disallow = (String) disallowList.get(i);
+                if (file.startsWith(disallow)) {
+                    return false;
+                }
+            }
+            return true;
 	}
 
+        
 	// Parse through page contents and retrieve links.
 	private ArrayList retrieveLinks(URL pageUrl, Document htmlDocument, HashSet crawledList, boolean limitHost)
-			throws IOException {
-		ArrayList linkList = new ArrayList();
-		htmlDocumenty = htmlDocument;
-		Elements linksOnPage = htmlDocument.select("a[href]");
+        throws IOException {
+            ArrayList linkList = new ArrayList();
+            htmlDocumenty = htmlDocument;
+            Elements linksOnPage = htmlDocument.select("a[href]");
 
-		for (Element a : linksOnPage) {
-			String link = a.absUrl("href");
-			// Skip empty links.
-			if (link.length() < 1) {
-				continue;
-			}
-			// Skip links that are just page anchors.
-			if (link.charAt(0) == '#') {
-				continue;
-			}
-			// Skip mailto links.
-			if (link.indexOf("mailto:") != -1) {
-				continue;
-			}
-			// Skip JavaScript links.
-			if (link.toLowerCase().indexOf("javascript") != -1) {
-				continue;
-			}
-			// Prefix absolute and relative URLs if necessary.
-			if (link.indexOf("://") == -1) {
-				// Handle absolute URLs.
-				if (link.charAt(0) == '/') {
-					link = "http://" + pageUrl.getHost() + link;
-					// Handle relative URLs.
-				} else {
-					String file = pageUrl.getFile();
-					if (file.indexOf('/') == -1) {
-						link = "http://" + pageUrl.getHost() + "/" + link;
-					} else {
-						String path = file.substring(0, file.lastIndexOf('/') + 1);
-						link = "http://" + pageUrl.getHost() + path + link;
-					}
-				}
-			}
-			// Remove anchors from link.
-			int index = link.indexOf('#');
-			if (index != -1) {
-				link = link.substring(0, index);
-			}
-			// Remove leading "www" from URL's host if present.
-			link = removeWwwFromUrl(link);
-			// Verify link and skip if invalid.
-			URL verifiedLink = verifyUrl(link);
-			if (verifiedLink == null) {
-				continue;
-			}
-			/*
-			 * If specified, limit links to those having the same host as the
-			 * start URL.
-			 */
-			if (limitHost && !pageUrl.getHost().toLowerCase().equals(verifiedLink.getHost().toLowerCase())) {
-				continue;
-			}
-			// Skip link if it has already been crawled.
-			if (crawledList.contains(link)) {
-				continue;
-			}
-			// Add link to list.
-			linkList.add(link);
-		}
-		return (linkList);
+            for (Element a : linksOnPage) {
+                String link = a.absUrl("href");
+                // Skip empty links.
+                if (link.length() < 1) {
+                    continue;
+                }
+                // Skip links that are just page anchors.
+                if (link.charAt(0) == '#') {
+                    continue;
+                }
+                // Skip mailto links.
+                if (link.indexOf("mailto:") != -1) {
+                    continue;
+                }
+                // Skip JavaScript links.
+                if (link.toLowerCase().indexOf("javascript") != -1) {
+                    continue;
+                }
+                // Prefix absolute and relative URLs if necessary.
+                if (link.indexOf("://") == -1) {
+                    // Handle absolute URLs.
+                    if (link.charAt(0) == '/') {
+                        link = "http://" + pageUrl.getHost() + link;
+                        // Handle relative URLs.
+                    } else {
+                        String file = pageUrl.getFile();
+                        if (file.indexOf('/') == -1) {
+                                link = "http://" + pageUrl.getHost() + "/" + link;
+                        } else {
+                                String path = file.substring(0, file.lastIndexOf('/') + 1);
+                                link = "http://" + pageUrl.getHost() + path + link;
+                        }
+                    }
+                }
+                // Remove anchors from link.
+                int index = link.indexOf('#');
+                if (index != -1) {
+                    link = link.substring(0, index);
+                }
+                // Remove leading "www" from URL's host if present.
+                link = removeWwwFromUrl(link);
+                // Verify link and skip if invalid.
+                URL verifiedLink = verifyUrl(link);
+                if (verifiedLink == null) {
+                    continue;
+                }
+                /*
+                 * If specified, limit links to those having the same host as the
+                 * start URL.
+                 */
+                if (limitHost && !pageUrl.getHost().toLowerCase().equals(verifiedLink.getHost().toLowerCase())) {
+                    continue;
+                }
+                // Skip link if it has already been crawled.
+                if (crawledList.contains(link)) {
+                    continue;
+                }
+                // Add link to list.
+                linkList.add(link);
+            }
+            return (linkList);
 	}
 
+        
 	// Remove leading "www" from a URL's host if present.
 	private String removeWwwFromUrl(String url) {
 		int index = url.indexOf("://www.");
 		if (index != -1) {
-			return url.substring(0, index + 3) + url.substring(index + 7);
+                    return url.substring(0, index + 3) + url.substring(index + 7);
 		}
 		return (url);
 	}
 
+        
 	private String retrieveMetadata(Document doc) {
-		int count = 0;
-		String keywords = doc.select("meta[name=keywords]").first().attr("content");
-		System.out.println(keywords);
-		if (keywords.length() > 1)
-			return keywords;
-		else
-			keywords = "";
-		return keywords;
-
+            int count = 0;
+            String keywords = doc.select("meta[name=keywords]").first().attr("content");
+            System.out.println(keywords);
+            if (keywords.length() > 1)
+                return keywords;
+            else
+                keywords = "";
+            return keywords;
 	}
-
-	/*
-	 * Determine whether or not search string is matched in the given page
-	 * contents.
-	 */
-
-	private void showStruct() {
-		for (Map.Entry<String, String[]> entry : CrawlerStruct.entrySet()) {
-			System.out.println("Word Record = " + entry.getKey() + " Url list = " + Arrays.toString(entry.getValue()));
-		}
-	}
+        
 }
