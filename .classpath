@@ -2,12 +2,13 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="Z:/CMP 2018/Second term/Advanced Programming Techniques/Project/lucene-6.4.1/core/lucene-core-6.4.1.jar"/>
-	<classpathentry kind="lib" path="Z:/CMP 2018/Second term/Advanced Programming Techniques/Project/lucene-6.4.1/analysis/common/lucene-analyzers-common-6.4.1.jar"/>
-	<classpathentry kind="lib" path="Z:/CMP 2018/Second term/Advanced Programming Techniques/Project/lucene-6.4.1/demo/lucene-demo-6.4.1.jar"/>
-	<classpathentry kind="lib" path="Z:/CMP 2018/Second term/Advanced Programming Techniques/Project/lucene-6.4.1/queryparser/lucene-queryparser-6.4.1.jar"/>
-	<classpathentry kind="lib" path="Z:/CMP 2018/Second term/Advanced Programming Techniques/Project/mongo-java-driver-3.4.2-javadoc.jar"/>
-	<classpathentry kind="lib" path="Z:/CMP 2018/Second term/Advanced Programming Techniques/Project/mongo-java-driver-3.4.2.jar"/>
-	<classpathentry kind="lib" path="Z:/CMP 2018/Second term/Advanced Programming Techniques/Project/jsoup-1.10.2.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/jsoup-1.10.2.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/mongodb-driver-3.4.2.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/lucene-6.5.0/analysis/common/lucene-analyzers-common-6.5.0.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/lucene-6.5.0/core/lucene-core-6.5.0.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/lucene-6.5.0/demo/lucene-demo-6.5.0.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/lucene-6.5.0/queryparser/lucene-queryparser-6.5.0.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/bson-3.4.2.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/mongodb-driver-core-3.4.2.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

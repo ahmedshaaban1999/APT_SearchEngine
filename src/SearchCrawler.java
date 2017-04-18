@@ -3,6 +3,7 @@ import java.awt.event.*;
 import java.io.*;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.regex.*;
@@ -22,6 +23,10 @@ public class SearchCrawler extends JFrame {
 	private static final String[] MAX_URLS = { "50", "100", "500", "1000" };
 	// Cache of robot disallow lists.
 	private HashMap disallowListCache = new HashMap();
+
+	// Set up crawl lists.
+	ConcurrentHashMap<String, Integer> crawledList = new ConcurrentHashMap<String, Integer>();
+	ConcurrentHashMap<String, Integer> toCrawlList = new ConcurrentHashMap<String, Integer>();
 
 	// Search GUI controls.
 	private JTextField startTextField;
@@ -321,82 +326,86 @@ public class SearchCrawler extends JFrame {
 		}
 		// Remove "www" from start URL if present.
 		startUrl = removeWwwFromUrl(startUrl);
+		// Add start URL to the tocrawllist.
+		// toCrawlList.keySet().add(startUrl);
+		toCrawlList.put(startUrl, startUrl.hashCode());
 		// Start the Search Crawler.
-		search(logFile, startUrl, maxUrls, searchString);
+		search(logFile, maxUrls, searchString);
 	}
 
-	private void search(final String logFile, final String startUrl, final int maxUrls, final String searchString) {
-		// Start the search in a new thread.
-		Thread thread = new Thread(new Runnable() {
-			public void run() {
-				// Show hour glass cursor while crawling is under way.
-				setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-				// Disable search controls.
-				startTextField.setEnabled(false);
-				maxComboBox.setEnabled(false);
-				limitCheckBox.setEnabled(false);
-				logTextField.setEnabled(false);
-				searchTextField.setEnabled(false);
-				caseCheckBox.setEnabled(false);
-				// Switch Search button to "Stop."
-				searchButton.setText("Stop");
-				// Reset stats.
-				table.setModel(new DefaultTableModel(new Object[][] {}, new String[] { "URL" }) {
-					public boolean isCellEditable(int row, int column) {
-						return false;
+	private void search(final String logFile, final int maxUrls, final String searchString) {
+		for (int i = 0; i < 4; i++) {
+			// Start the search in a new thread.
+			Thread thread = new Thread(new Runnable() {
+				public void run() {
+					// Show hour glass cursor while crawling is under way.
+					setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+					// Disable search controls.
+					startTextField.setEnabled(false);
+					maxComboBox.setEnabled(false);
+					limitCheckBox.setEnabled(false);
+					logTextField.setEnabled(false);
+					searchTextField.setEnabled(false);
+					caseCheckBox.setEnabled(false);
+					// Switch Search button to "Stop."
+					searchButton.setText("Stop");
+					// Reset stats.
+					/*
+					 * table.setModel(new DefaultTableModel(new Object[][] {},
+					 * new String[] { "URL" }) { public boolean
+					 * isCellEditable(int row, int column) { return false; } });
+					 */
+
+					// Open matches log file.
+					try {
+						logFileWriter = new PrintWriter(new FileWriter(logFile));
+					} catch (Exception e) {
+						showError("Unable to open matches log file.");
+						return;
 					}
-				});
+					// Turn crawling flag on.
+					crawling = true;
+					try {
+						// Perform the actual crawling.
+						crawl(maxUrls, limitCheckBox.isSelected(), searchString, caseCheckBox.isSelected());
+					} catch (IOException ex) {
+						Logger.getLogger(SearchCrawler.class.getName()).log(Level.SEVERE, null, ex);
+					}
+					// Turn crawling flag off.
+					// crawling = false;
+					// Close matches log file.
+					try {
+						logFileWriter.close();
+					} catch (Exception e) {
+						showError("Unable to close matches log file.");
+					}
+					// Mark search as done.
+					crawlingLabel2.setText("Done");
+					// Enable search controls.
+					startTextField.setEnabled(true);
+					maxComboBox.setEnabled(true);
+					limitCheckBox.setEnabled(true);
+					logTextField.setEnabled(true);
+					searchTextField.setEnabled(true);
+					caseCheckBox.setEnabled(true);
+					// Switch search button back to "Search."
+					searchButton.setText("Search");
+					// Return to default cursor.
+					setCursor(Cursor.getDefaultCursor());
+					// Show message if search string not found.
 
-				updateStats(startUrl, 0, 0, maxUrls);
-				// Open matches log file.
-				try {
-					logFileWriter = new PrintWriter(new FileWriter(logFile));
-				} catch (Exception e) {
-					showError("Unable to open matches log file.");
-					return;
-				}
-				// Turn crawling flag on.
-				crawling = true;
-				try {
-					// Perform the actual crawling.
-					crawl(startUrl, maxUrls, limitCheckBox.isSelected(), searchString, caseCheckBox.isSelected());
-				} catch (IOException ex) {
-					Logger.getLogger(SearchCrawler.class.getName()).log(Level.SEVERE, null, ex);
-				}
-				// Turn crawling flag off.
-				crawling = false;
-				// Close matches log file.
-				try {
-					logFileWriter.close();
-				} catch (Exception e) {
-					showError("Unable to close matches log file.");
-				}
-				// Mark search as done.
-				crawlingLabel2.setText("Done");
-				// Enable search controls.
-				startTextField.setEnabled(true);
-				maxComboBox.setEnabled(true);
-				limitCheckBox.setEnabled(true);
-				logTextField.setEnabled(true);
-				searchTextField.setEnabled(true);
-				caseCheckBox.setEnabled(true);
-				// Switch search button back to "Search."
-				searchButton.setText("Search");
-				// Return to default cursor.
-				setCursor(Cursor.getDefaultCursor());
-				// Show message if search string not found.
+					if (table.getRowCount() == 0) {
+						JOptionPane.showMessageDialog(SearchCrawler.this,
+								"Your Search String was not found. Please try another.", "Search String Not Found",
+								JOptionPane.WARNING_MESSAGE);
+					}
 
-				if (table.getRowCount() == 0) {
-					JOptionPane.showMessageDialog(SearchCrawler.this,
-							"Your Search String was not found. Please try another.", "Search String Not Found",
-							JOptionPane.WARNING_MESSAGE);
 				}
 
-			}
+			});
 
-		});
-
-		thread.start();
+			thread.start();
+		}
 	}
 
 	// Show dialog box with error message.
@@ -468,15 +477,8 @@ public class SearchCrawler extends JFrame {
 	}
 
 	// public void crawl(String startUrl, int maxUrls, boolean limitHost)
-	public void crawl(String startUrl, int maxUrls, boolean limitHost, String searchString, boolean caseSensitive)
-			throws IOException {
+	public void crawl(int maxUrls, boolean limitHost, String searchString, boolean caseSensitive) throws IOException {
 		System.out.println("I am here in Crawl");
-		// Set up crawl lists.
-		HashSet crawledList = new HashSet();
-		LinkedHashSet toCrawlList = new LinkedHashSet();
-
-		// Add start URL to the tocrawllist.
-		toCrawlList.add(startUrl);
 
 		/*
 		 * Perform actual crawling by looping through the To Crawl list.
@@ -488,22 +490,34 @@ public class SearchCrawler extends JFrame {
 			 */
 			if (maxUrls != -1) {
 				if (crawledList.size() == maxUrls) {
+					System.out.println("crawled too many sites");
 					break;
 				}
 			}
-			String url = toCrawlList.iterator().toString();
+			String url = toCrawlList.keySet().iterator().toString();
 			URL verifiedUrl = verifyUrl(url);
 			Document htmlDocumentq = null;
 			// Get URL at bottom of the list.
 			do {
-				if (toCrawlList.iterator().hasNext()) {
-					url = (String) toCrawlList.iterator().next();
-				} else {
-					break;
-				}
-				// Remove URL from the To Crawl list.
-				toCrawlList.remove(url);
 
+				synchronized (this) {
+
+					while (! toCrawlList.keySet().iterator().hasNext()) {
+						
+					}
+					url = (String) toCrawlList.keySet().iterator().next();
+					toCrawlList.remove(url);
+					/*if (toCrawlList.keySet().iterator().hasNext()) {
+						url = (String) toCrawlList.keySet().iterator().next();
+						// toCrawlList.keySet().iterator().remove();
+						// Remove URL from the To Crawl list.
+						toCrawlList.remove(url);
+					} else {
+						System.out.println("no more links");
+						break;
+					}*/
+				}
+				System.out.println("processing" + url);
 				// Convert string url to URL object.
 				verifiedUrl = verifyUrl(url);
 
@@ -516,7 +530,7 @@ public class SearchCrawler extends JFrame {
 				updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
 
 				// Add page to the crawled list.
-				crawledList.add(url);
+				crawledList.put(url, url.hashCode());
 
 				///////////////////////////////////////
 				// Connect to the given URL./
@@ -534,9 +548,14 @@ public class SearchCrawler extends JFrame {
 			 */
 			if (pageBody != null && pageBody.length() > 0) {
 				// Retrieve list of valid links from page.
-				ArrayList links = retrieveLinks(verifiedUrl, htmlDocumentq, crawledList, limitHost);
-				toCrawlList.addAll(links);
-
+				ArrayList links = retrieveLinks(verifiedUrl, htmlDocumentq, limitHost);
+				// toCrawlList.entrySet().addAll(links);
+				for (Object link : links) {
+					if (!crawledList.containsKey((String)link)) {
+						toCrawlList.put((String) link, link.hashCode());
+					}
+				}
+				System.out.println("tocrawllist size is " + toCrawlList.size());
 				populateIndex(url);
 				showStruct();
 
@@ -615,8 +634,7 @@ public class SearchCrawler extends JFrame {
 	}
 
 	// Parse through page contents and retrieve links.
-	private ArrayList retrieveLinks(URL pageUrl, Document htmlDocument, HashSet crawledList, boolean limitHost)
-			throws IOException {
+	private ArrayList retrieveLinks(URL pageUrl, Document htmlDocument, boolean limitHost) throws IOException {
 		ArrayList linkList = new ArrayList();
 		htmlDocumenty = htmlDocument;
 		Elements linksOnPage = htmlDocument.select("a[href]");
