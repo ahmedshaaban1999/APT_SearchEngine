@@ -10,5 +10,7 @@
 	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/lucene-6.5.0/queryparser/lucene-queryparser-6.5.0.jar"/>
 	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/bson-3.4.2.jar"/>
 	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/mongodb-driver-core-3.4.2.jar"/>
+	<classpathentry kind="lib" path="B:/Github/APTSearchEngine/lucene-6.5.0/analysis/stempel/lucene-analyzers-stempel-6.5.0.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/jdk1.7.0_55"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

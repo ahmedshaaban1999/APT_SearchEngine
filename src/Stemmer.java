@@ -74,6 +74,14 @@ class Stemmer
     * of a char[] array. This is like repeated calls of add(char ch), but
     * faster.
     */
+   
+   public String action(String word) {
+	   i = 0;
+	   i_end = 0;
+	   this.add(word.toCharArray(),word.length());
+	   this.stem();
+	   return this.toString();
+   }
 
    public void add(char[] w, int wLen)
    {  if (i+wLen >= b.length)
@@ -89,7 +97,7 @@ class Stemmer
     * or a reference to the internal buffer can be retrieved by getResultBuffer
     * and getResultLength (which is generally more efficient.)
     */
-   public String toString() { return new String(b,0,i_end); }
+   public String toString() { return new String(b,i,i_end); }
 
    /**
     * Returns the length of the word resulting from the stemming process.
@@ -354,7 +362,7 @@ class Stemmer
     */
    public void stem()
    {  k = i - 1;
-      if (k > 1) { step1(); /*step2(); step3(); step4(); step5(); step6();*/ }
+      if (k > 1) { step1(); step2(); step3(); step4(); step5(); step6(); }
       i_end = k+1; i = 0;
    }
 

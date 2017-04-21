@@ -7,6 +7,8 @@ import com.mongodb.client.FindIterable;
 import com.mongodb.client.MongoCollection;
 import com.mongodb.client.MongoCursor;
 
+import java.util.Map;
+import java.util.Iterator;
 import static com.mongodb.client.model.Filters.*;
 import static com.mongodb.client.model.Projections.*;
 import static com.mongodb.client.model.Updates.*;
@@ -14,14 +16,19 @@ import org.bson.Document;
 import org.bson.conversions.Bson;
 import org.bson.types.ObjectId;
 
+
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Database {
 	
 	MongoClient mongoClient ;
 	MongoDatabase database ;
+	MongoDatabase db ;
 	MongoCollection<Document> collection ;
+	MongoCollection<Document> coll ;
 	
 	Block<Document> printBlock = new Block<Document>() {
 	       @Override
@@ -34,9 +41,12 @@ public class Database {
 		try {
 		mongoClient = new MongoClient();
 		database = mongoClient.getDatabase("test");
+		db = mongoClient.getDatabase("info");
 		//set timeout to 3 seconds
 		database.withWriteConcern(new WriteConcern(3000));
+		db.withWriteConcern(new WriteConcern(3000));
 		collection = database.getCollection("col");
+		coll = database.getCollection("coll");
 		return true;
 		}
 		catch (Exception exp){
@@ -62,7 +72,6 @@ public class Database {
 			System.out.println("Error while creating document " + exp.getMessage());
 			return false;
 		}
-		
 	}
 	
 	public boolean updateDocument(SiteHits siteHits) {
@@ -115,5 +124,37 @@ public class Database {
         //.projection(fields(include("name", "stars", "categories"), excludeId()))
         //.forEach(printBlock);
 		
+	}
+	
+	public void saveLinks (ConcurrentHashMap<String, Integer> crawledList, ConcurrentHashMap<String, Integer> toCrawlList) {
+		ArrayList<String> links = new ArrayList<>();
+		String url;
+		while(toCrawlList.keySet().iterator().hasNext()){
+			url = (String) toCrawlList.keySet().iterator().next();
+			links.add(url);
+		}
+		Document doc = new Document("name","crawledList").append("list",links);
+		coll.insertOne(doc);
+		
+		links = new ArrayList<>();
+		while(crawledList.keySet().iterator().hasNext()){
+			url = (String) crawledList.keySet().iterator().next();
+			links.add(url);
+		}
+		doc = new Document("name","toCrawlList").append("list",links);
+		coll.insertOne(doc);
+	}
+	
+	public void saveLexion (HashMap<String, Integer> lexion) {
+		ArrayList<Document> words = new ArrayList<Document>();
+		Iterator<Map.Entry<String, Integer>> it = lexion.entrySet().iterator();
+		while(it.hasNext()){
+			Map.Entry<String, Integer> entry = (Map.Entry<String, Integer>) it.next();
+			words.add(new Document("word",entry.getKey())
+					.append("tf", entry.getValue()));
+		}
+		Document doc = new Document("name","lexion")
+				.append("list", words);
+		coll.insertOne(doc);
 	}
 }
