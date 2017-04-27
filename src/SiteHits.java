@@ -4,6 +4,7 @@ public class SiteHits {
 	
 	private String word;
 	private String stemmed;
+	private int tf;
 	private String site;
 	
 	private Vector<Pair<Integer,String>> hitList = new Vector<>();
@@ -16,6 +17,10 @@ public class SiteHits {
 		this.stemmed = stemmed;
 	}
 	
+	public void setTF(int tf) {
+		this.tf = tf;
+	}
+	
 	public String getWord() {
 		return word;
 	}
@@ -26,6 +31,10 @@ public class SiteHits {
 
 	public String getSite() {
 		return site;
+	}
+	
+	public int getTF() {
+		return tf;
 	}
 	
 	public void addHit (int pos,String type){

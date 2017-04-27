@@ -1,5 +1,6 @@
 import com.mongodb.Block;
 import com.mongodb.DBCursor;
+import com.mongodb.DBObject;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import com.mongodb.client.MongoDatabase;
@@ -37,6 +38,11 @@ public class Database {
 	       }
 	};
 
+	public Database() {
+		if (!connect()){
+			System.out.println("Database failed to connect");
+		}
+	}
 	public boolean connect() {
 		try {
 		mongoClient = new MongoClient();
@@ -65,6 +71,7 @@ public class Database {
 		Document doc = new Document("word",siteHits.getWord())
 				.append("stemmed", siteHits.getStemmed())
 				.append("site hits",Arrays.asList(new Document("site",siteHits.getSite())
+						.append("tf", siteHits.getTF())
 						.append("hits", hits)));
 		collection.insertOne(doc);
 		return true;
@@ -99,17 +106,26 @@ public class Database {
 		return true;
 	}
 	
-	public void findDocument() {
+	public ArrayList<String> findDocument(String tag, String word) {
 		// a query written without helpers
 		//collection.find(new Document("stars", new Document("$gte", 2)
 		//	          	.append("$lt", 5))
 		//	          	.append("categories", "Bakery")).forEach(printBlock);
 		
 		// a query written with helpers
-		MongoCursor<Document> cur = collection.find(eq("site", "www.yahoo.com")).iterator();
-		System.out.println(cur.next().getString("site"));
+		MongoCursor<Document> cur = collection.find(eq(tag, word)).iterator();
+		ArrayList<String> links = new ArrayList<String>();
+		while (cur.hasNext()){
+			ArrayList<Document> results = (ArrayList<Document>) cur.next().get("site hits");
+			results.forEach(result -> links.add(result.getString("site")));
+		}
+		/*{
+			links.add(result.iterator().next().getString("site"));
+		}*/
+		//System.out.println(cur.next().getString("site"));
 		
-		collection.find(and(elemMatch("list")));
+		return links;
+		//collection.find(and(elemMatch("list")));
 		
 		// a projection written without helpers
 		//collection.find(and(gte("stars", 2), lt("stars", 5), eq("categories", "Bakery")))
