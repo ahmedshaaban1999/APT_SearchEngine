@@ -3,11 +3,13 @@ import java.util.*;
 public class FrontBack {
 
 	// private String[] query;
-	public HashMap<String, Integer> lexion;
+	public HashMap<String, Integer> crawledList;
 	public HashMap<String, Integer> rank;
+	public HashMap<String, Integer> lexion;
 	Factory fac;
 
-	public FrontBack(HashMap<String, Integer> lex) {
+	public FrontBack(HashMap<String, Integer> craw, HashMap<String, Integer> lex) {
+		crawledList = craw;
 		lexion = lex;
 		fac = new Factory();
 	}
@@ -24,14 +26,15 @@ public class FrontBack {
 					Integer value1 = rank.getOrDefault(key, 0);
 					Integer value2 = tmp.get(key);
 					rank.put(key, 
-							value1 + value2);
+							value1 + value2 + crawledList.get(key) + lexion.get(query[i]));
 				}
 			}
 			rank = sortByValue(rank);
-			Iterator<String> it = rank.keySet().iterator();
-			while (it.hasNext()) {
-				System.out.println(it.next());
-			}
+//			Iterator<String> it = rank.keySet().iterator();
+//			while (it.hasNext()) {
+//				System.out.println(it.next());
+//			}
+			
 		}
 	}
 
@@ -40,7 +43,8 @@ public class FrontBack {
 		Collections.sort(list, new Comparator<Map.Entry<K, V>>() {
 			@Override
 			public int compare(Map.Entry<K, V> o1, Map.Entry<K, V> o2) {
-				return (o1.getValue()).compareTo(o2.getValue());
+				//replace o2 and o1 to change the order
+				return (o2.getValue()).compareTo(o1.getValue());
 			}
 		});
 

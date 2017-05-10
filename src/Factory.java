@@ -26,6 +26,7 @@ public class Factory {
 			TokenStream tokenizer = englishAnalyzer.tokenStream(null, page);
 			tokenizer.reset();
 			CharTermAttribute attr = tokenizer.addAttribute(CharTermAttribute.class);
+			tokens.removeAllElements();
 			while (tokenizer.incrementToken()) {
 				tokens.addElement(attr.toString());
 			}
@@ -45,7 +46,7 @@ public class Factory {
 			System.out.println("tokens size before start: " + tokens.size());
 			System.out.println("");
 			int tokens_size = tokens.size();
-			for (int i = 0; i < tokens_size; i++) {
+			for (int i = 0; i < tokens.size(); i++) {
 				int tf = 1;
 				String st = tokens.elementAt(i);
 				site = new SiteHits(st, stemmer.action(st), url);
@@ -76,11 +77,16 @@ public class Factory {
 	}
 
 	public HashMap<String, Integer> find(String word) {
-		HashMap<String, Integer> result = new HashMap<String, Integer>();
-		ArrayList<String> arr = db.findDocument("word", word);
-		arr.forEach(link -> result.put(link, 2));
-		arr = db.findDocument("stemmed", word);
-		arr.forEach(link -> result.put(link, result.getOrDefault(link, 0) + 1));
+		HashMap<String, Integer> result = db.findDocument("word", word);
+		HashMap<String, Integer> map = db.findDocument("stemmed", word);
+		Iterator<Map.Entry<String, Integer>> it = map.entrySet().iterator();
+		while (it.hasNext()) {
+			String key = it.next().getKey();
+			Integer value1 = result.getOrDefault(key, 0);
+			Integer value2 = map.get(key);
+			result.put(key, 
+					value1 + value2);
+		}
 		return result;
 	}
 

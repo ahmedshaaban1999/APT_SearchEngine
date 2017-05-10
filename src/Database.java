@@ -106,7 +106,7 @@ public class Database {
 		return true;
 	}
 	
-	public ArrayList<String> findDocument(String tag, String word) {
+	public HashMap<String,Integer> findDocument(String tag, String word) {
 		// a query written without helpers
 		//collection.find(new Document("stars", new Document("$gte", 2)
 		//	          	.append("$lt", 5))
@@ -114,10 +114,10 @@ public class Database {
 		
 		// a query written with helpers
 		MongoCursor<Document> cur = collection.find(eq(tag, word)).iterator();
-		ArrayList<String> links = new ArrayList<String>();
+		HashMap<String,Integer> links = new HashMap<String,Integer>();
 		while (cur.hasNext()){
 			ArrayList<Document> results = (ArrayList<Document>) cur.next().get("site hits");
-			results.forEach(result -> links.add(result.getString("site")));
+			results.forEach(result -> links.put(result.getString("site"),Integer.parseInt(result.getString("tf"))));
 		}
 		/*{
 			links.add(result.iterator().next().getString("site"));

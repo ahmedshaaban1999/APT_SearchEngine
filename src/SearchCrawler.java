@@ -55,7 +55,8 @@ public class SearchCrawler extends JFrame {
 
 	private Document htmlDocumenty;
 	private String text;
-	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
+	private static final String USER_AGENT = "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/535.1 "
+			+ "(KHTML, like Gecko) Chrome/13.0.782.112 Safari/535.1";
 	Factory fac = new Factory();
 
 	// Constructor for Search Web Crawler.
@@ -328,7 +329,7 @@ public class SearchCrawler extends JFrame {
 		startUrl = removeWwwFromUrl(startUrl);
 		// Add start URL to the tocrawllist.
 		// toCrawlList.keySet().add(startUrl);
-		toCrawlList.put(startUrl, startUrl.hashCode());
+		toCrawlList.put(startUrl, 1);
 		// Start the Search Crawler.
 		search(logFile, maxUrls, searchString);
 	}
@@ -506,6 +507,8 @@ public class SearchCrawler extends JFrame {
 						
 					}
 					url = (String) toCrawlList.keySet().iterator().next();
+					// Add page to the crawled list.
+					crawledList.put(url, toCrawlList.get(url));
 					toCrawlList.remove(url);
 					/*if (toCrawlList.keySet().iterator().hasNext()) {
 						url = (String) toCrawlList.keySet().iterator().next();
@@ -529,9 +532,6 @@ public class SearchCrawler extends JFrame {
 				// Update crawling stats.
 				updateStats(url, crawledList.size(), toCrawlList.size(), maxUrls);
 
-				// Add page to the crawled list.
-				crawledList.put(url, url.hashCode());
-
 				///////////////////////////////////////
 				// Connect to the given URL./
 				///////////////////////////////////////
@@ -552,7 +552,11 @@ public class SearchCrawler extends JFrame {
 				// toCrawlList.entrySet().addAll(links);
 				for (Object link : links) {
 					if (!crawledList.containsKey((String)link)) {
-						toCrawlList.put((String) link, link.hashCode());
+						toCrawlList.put((String) link, toCrawlList.getOrDefault((String) link, 1)
+								+ crawledList.get(url));
+					}else {
+						crawledList.put((String) link, crawledList.get(link.toString())
+								+ crawledList.get(url));
 					}
 				}
 				System.out.println("tocrawllist size is " + toCrawlList.size());
